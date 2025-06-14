@@ -1,5 +1,6 @@
 package com.riskengine.risksystem.service;
 
+import com.riskengine.risksystem.model.RiskLevel;
 import com.riskengine.risksystem.model.RiskScore;
 import com.riskengine.risksystem.model.Transaction;
 import com.riskengine.risksystem.model.UserProfile;
@@ -29,19 +30,40 @@ public class RiskScoringService {
     }
 
     /**
+     * Evaluates risk for a transaction and returns a RiskScore object
+     * This method is used by TradingService
+     * 
+     * @param transaction The transaction to evaluate
+     * @param userProfile The user profile associated with the transaction
+     * @return A RiskScore object with the calculated score and risk level
+     */
+    public RiskScore calculateRiskScore(Transaction transaction, UserProfile userProfile) {
+        // Calculate numeric score using existing method
+        double score = calculateNumericScore(transaction, userProfile);
+        RiskLevel riskLevel = determineRiskLevel(score);
+        
+        return RiskScore.builder()
+                .transactionId(transaction.getId())
+                .score(score)
+                .level(riskLevel)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+    
+    /**
      * Creates a RiskScore object for a given transaction
      * 
      * @param transaction The transaction to evaluate
      * @return A RiskScore object with the calculated score and risk level
      */
     public RiskScore createRiskScore(Transaction transaction) {
-        double score = calculateRiskScore(transaction);
-        String riskLevel = determineRiskLevel(score);
+        double score = calculateNumericScore(transaction);
+        RiskLevel riskLevel = determineRiskLevel(score);
         
         return RiskScore.builder()
                 .transactionId(transaction.getId())
                 .score(score)
-                .riskLevel(riskLevel)
+                .level(riskLevel)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
@@ -49,40 +71,41 @@ public class RiskScoringService {
     /**
      * Determines the risk level based on the numeric score
      */
-    private String determineRiskLevel(double score) {
+    private RiskLevel determineRiskLevel(double score) {
         if (score < 0.3) {
-            return "LOW";
+            return RiskLevel.LOW;
         } else if (score < 0.7) {
-            return "MEDIUM";
+            return RiskLevel.MEDIUM;
         } else {
-            return "HIGH";
+            return RiskLevel.HIGH;
         }
     }
 
-    // The existing calculateRiskScore methods that return double
-    
     /**
-     * Calculate risk score from a RiskScore object
+     * Calculate numeric risk score from a RiskScore object
+     * @return Double risk score value
      */
-    public double calculateRiskScore(RiskScore riskScore) {
+    public double calculateNumericScore(RiskScore riskScore) {
         Transaction transaction = transactionRepository.findById(riskScore.getTransactionId())
             .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
-        return calculateRiskScore(transaction);
+        return calculateNumericScore(transaction);
     }
 
     /**
-     * Calculate risk score from a Transaction
+     * Calculate numeric risk score from a Transaction
+     * @return Double risk score value
      */
-    public double calculateRiskScore(Transaction transaction) {
+    public double calculateNumericScore(Transaction transaction) {
         UserProfile userProfile = userProfileRepository.findById(transaction.getUserId())
             .orElse(null);
-        return calculateRiskScore(transaction, userProfile);
+        return calculateNumericScore(transaction, userProfile);
     }
     
     /**
      * Original method that calculates risk based on both transaction and user profile
+     * @return Double risk score value
      */
-    public double calculateRiskScore(Transaction transaction, UserProfile userProfile) {
+    public double calculateNumericScore(Transaction transaction, UserProfile userProfile) {
         double baseScore = mlModelUtil.calculateRiskScore(transaction);
         
         if (userProfile != null && userProfile.isHighRisk()) {
