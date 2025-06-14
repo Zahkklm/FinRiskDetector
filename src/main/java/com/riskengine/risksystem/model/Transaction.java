@@ -27,13 +27,22 @@ public class Transaction {
     private Long id;
     
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private String userId;  // Changed from Long to String
     
     @Column(nullable = false, precision = 19, scale = 8)
     private BigDecimal amount;
     
     @Column(name = "transaction_date")
     private LocalDateTime timestamp;
+    
+    @Column(name = "transaction_type")
+    private String type;
+    
+    @Column(name = "source_account_id")
+    private String sourceAccountId;
+    
+    @Column(name = "destination_account_id")
+    private String destinationAccountId;
     
     @Column(name = "risk_score")
     private Double riskScore;
