@@ -59,7 +59,7 @@ public class TransactionProcessingService {
         transaction = transactionRepository.save(transaction);
         
         // Calculate risk score
-        double riskScore = riskScoringService.calculateRiskScore(transaction);
+        double riskScore = riskScoringService.calculateNumericScore(transaction);
 
         // Update with risk score
         transaction.setRiskScore(riskScore);
