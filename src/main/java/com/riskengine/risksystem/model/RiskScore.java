@@ -7,6 +7,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,8 +34,9 @@ public class RiskScore {
     @Column(name = "risk_score")
     private double score;
     
+    @Enumerated(EnumType.STRING)
     @Column(name = "risk_level")
-    private String riskLevel;
+    private RiskLevel level;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
