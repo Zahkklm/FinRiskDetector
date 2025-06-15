@@ -95,17 +95,17 @@ public class MarketConfig {
     }
     
     /**
-     * Update market prices every 5 seconds
+     * Update market prices every 1 second
      */
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 1000)
     public void updateMarketPrices() {
         marketSimulator.updateMarketPrices();
     }
     
     /**
-     * Process limit orders every 5 seconds
+     * Process limit orders every 1 second
      */
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 1000)
     public void processLimitOrders() {
         tradingService.processLimitOrders();
     }
