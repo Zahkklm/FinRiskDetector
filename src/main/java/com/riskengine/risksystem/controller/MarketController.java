@@ -1,5 +1,7 @@
 package com.riskengine.risksystem.controller;
 
+import com.riskengine.risksystem.dto.FundsRequestDTO;
+import com.riskengine.risksystem.dto.OrderRequestDTO;
 import com.riskengine.risksystem.market.model.*;
 import com.riskengine.risksystem.market.service.*;
 import com.riskengine.risksystem.market.simulation.MarketSimulator;
@@ -7,13 +9,13 @@ import com.riskengine.risksystem.market.simulation.MarketSimulator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import lombok.Data;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * REST API controller for market data and trading operations
+ * REST API controller for market data and trading operations.
+ * Provides endpoints for asset information, price data, trading, and portfolio management.
  */
 @RestController
 @RequestMapping("/api/market")
@@ -29,6 +31,8 @@ public class MarketController {
     
     /**
      * Get all available assets in the market
+     * 
+     * @return List of all tradable assets with their details
      */
     @GetMapping("/assets")
     public ResponseEntity<List<Asset>> getAssets() {
@@ -37,6 +41,10 @@ public class MarketController {
     
     /**
      * Get current price for a specific asset
+     * 
+     * @param symbol The unique identifier for the asset (e.g., "BTC-USD")
+     * @return Current price information for the requested asset
+     * @throws 404 Not Found if the symbol doesn't exist
      */
     @GetMapping("/price/{symbol}")
     public ResponseEntity<AssetPrice> getPrice(@PathVariable String symbol) {
@@ -49,6 +57,8 @@ public class MarketController {
     
     /**
      * Get all current market prices
+     * 
+     * @return Map of all asset symbols to their current price information
      */
     @GetMapping("/prices")
     public ResponseEntity<Map<String, AssetPrice>> getAllPrices() {
@@ -57,6 +67,10 @@ public class MarketController {
     
     /**
      * Get price history for a specific asset
+     * 
+     * @param symbol The unique identifier for the asset (e.g., "BTC-USD")
+     * @return List of historical prices with timestamps
+     * @throws 404 Not Found if the symbol doesn't exist
      */
     @GetMapping("/history/{symbol}")
     public ResponseEntity<List<AssetPrice>> getPriceHistory(@PathVariable String symbol) {
@@ -68,23 +82,16 @@ public class MarketController {
     }
     
     /**
-     * Request data for order placement
-     */
-    @Data
-    public static class OrderRequest {
-        private String userId;
-        private String symbol;
-        private Order.OrderSide side;
-        private double quantity;
-        private double price;
-        private Order.OrderType type;
-    }
-    
-    /**
      * Place a new order
+     * 
+     * @param request Order details including user ID, asset symbol, side (buy/sell),
+     *                quantity, price, and order type (market/limit)
+     * @return OrderResult containing success status, order ID, and message
+     * @throws 400 Bad Request if order parameters are invalid
+     * @throws 403 Forbidden if the order is rejected due to high risk
      */
     @PostMapping("/order")
-    public ResponseEntity<TradingService.OrderResult> placeOrder(@RequestBody OrderRequest request) {
+    public ResponseEntity<TradingService.OrderResult> placeOrder(@RequestBody OrderRequestDTO request) {
         TradingService.OrderResult result = tradingService.placeOrder(
             request.getUserId(),
             request.getSymbol(),
@@ -99,6 +106,9 @@ public class MarketController {
     
     /**
      * Get open orders for a user
+     * 
+     * @param userId The unique identifier for the user
+     * @return List of the user's open orders
      */
     @GetMapping("/orders/{userId}")
     public ResponseEntity<List<Order>> getUserOrders(@PathVariable String userId) {
@@ -107,6 +117,12 @@ public class MarketController {
     
     /**
      * Cancel an order
+     * 
+     * @param userId The unique identifier for the user
+     * @param orderId The unique identifier for the order to cancel
+     * @return OrderResult containing success status and message
+     * @throws 404 Not Found if the order doesn't exist
+     * @throws 403 Forbidden if the user doesn't own the order
      */
     @DeleteMapping("/order/{userId}/{orderId}")
     public ResponseEntity<TradingService.OrderResult> cancelOrder(
@@ -118,6 +134,9 @@ public class MarketController {
     
     /**
      * Get user portfolio
+     * 
+     * @param userId The unique identifier for the user
+     * @return Portfolio containing cash balance and asset holdings
      */
     @GetMapping("/portfolio/{userId}")
     public ResponseEntity<Portfolio> getPortfolio(@PathVariable String userId) {
@@ -125,7 +144,10 @@ public class MarketController {
     }
     
     /**
-     * Get portfolio value
+     * Get portfolio total value (cash + assets at current market prices)
+     * 
+     * @param userId The unique identifier for the user
+     * @return Total portfolio value in USD
      */
     @GetMapping("/portfolio/{userId}/value")
     public ResponseEntity<Double> getPortfolioValue(@PathVariable String userId) {
@@ -133,20 +155,17 @@ public class MarketController {
     }
     
     /**
-     * Deposit funds request
-     */
-    @Data
-    public static class FundsRequest {
-        private double amount;
-    }
-    
-    /**
      * Deposit funds to portfolio
+     * 
+     * @param userId The unique identifier for the user
+     * @param request Object containing the amount to deposit
+     * @return 200 OK if deposit successful
+     * @throws 400 Bad Request if amount is invalid (negative or zero)
      */
     @PostMapping("/portfolio/{userId}/deposit")
     public ResponseEntity<?> depositFunds(
             @PathVariable String userId, 
-            @RequestBody FundsRequest request) {
+            @RequestBody FundsRequestDTO request) {
         try {
             portfolioService.depositFunds(userId, request.getAmount());
             return ResponseEntity.ok().build();
@@ -157,11 +176,16 @@ public class MarketController {
     
     /**
      * Withdraw funds from portfolio
+     * 
+     * @param userId The unique identifier for the user
+     * @param request Object containing the amount to withdraw
+     * @return 200 OK if withdrawal successful
+     * @throws 400 Bad Request if amount is invalid or exceeds available balance
      */
     @PostMapping("/portfolio/{userId}/withdraw")
     public ResponseEntity<?> withdrawFunds(
             @PathVariable String userId, 
-            @RequestBody FundsRequest request) {
+            @RequestBody FundsRequestDTO request) {
         try {
             boolean success = portfolioService.withdrawFunds(userId, request.getAmount());
             if (success) {
