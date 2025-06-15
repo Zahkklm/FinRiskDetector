@@ -45,6 +45,13 @@ public class RiskAssessmentController {
         this.transactionRepository = transactionRepository;
     }
 
+    /**
+     * Evaluate risk for an existing transaction
+     *
+     * @param request DTO containing the transaction ID to evaluate
+     * @return RiskScoreResponseDTO containing risk score and level information
+     * @throws EntityNotFoundException if transaction not found
+     */
     @Operation(
         summary = "Evaluate risk for an existing transaction",
         description = "Retrieves a transaction by ID and calculates its risk score and level"
@@ -88,6 +95,12 @@ public class RiskAssessmentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Evaluate risk for a transaction without storing it
+     *
+     * @param requestDTO DTO containing transaction details for risk evaluation
+     * @return RiskScoreResponseDTO containing the calculated risk score and level
+     */
     @Operation(
         summary = "Evaluate risk for a new transaction",
         description = "Evaluates risk for a transaction that hasn't been stored yet"
@@ -131,6 +144,11 @@ public class RiskAssessmentController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Check if the risk assessment service is operational
+     *
+     * @return String message indicating service status
+     */
     @Operation(
         summary = "Get service status",
         description = "Check if the risk assessment service is up and running"
